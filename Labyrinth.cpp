@@ -102,7 +102,7 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 		}
 		n->setVisited(true);
 		path->push_back(n);
-		std::list<Node*> *adjnodes = n->getAdj_Nodes();
+		std::set<Node*> *adjnodes = n->getAdj_Nodes();
 
 		if(adjnodes->size() == 1 && n != root) {
 
@@ -116,24 +116,43 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 				longest_path = new std::list<Node*>(*path);
 				max = path->size();
 				delete to_be_deleted;
-				path->pop_back();
-			}
-			else{
-				Node* last = path->back();
-				last->setVisited(false);
-				path->pop_back();
 
+			}
+			if((!path->empty()) && (!mainStack->empty())){
+				Node* to_reach = mainStack->top();
+				Node* last = path->back();
+				//find the to_reach node in the adjacent nodes of last...until you find it pop out of the path.
+				while (last->getAdj_Nodes()->count(to_reach) == 0 )
+				{
+					path->pop_back();
+					last = path->back();
+				}
 			}
 
 
 		}
 		else{
 			bool pushed_one = false;
-			for(std::list<Node*>::iterator it=adjnodes->begin(); it!=adjnodes->end(); it++ ){
+			for(std::set<Node*>::iterator it=adjnodes->begin(); it!=adjnodes->end(); it++ ){
 				Node *n = *it;
 				if(!n->getVisited()){
 					pushed_one = true;
 					mainStack->push(*it);
+				}
+
+
+			}
+
+			if(!pushed_one){
+				if((!path->empty()) && (!mainStack->empty())){
+					Node* to_reach = mainStack->top();
+					Node* last = path->back();
+					//find the to_reach node in the adjacent nodes of last...until you find it pop out of the path.
+					while (last->getAdj_Nodes()->count(to_reach) == 0 )
+					{
+						path->pop_back();
+						last = path->back();
+					}
 				}
 
 			}
@@ -144,6 +163,8 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 
 
 }
+
+// the next function is an alternative recursive function..which is not very efficient for big labyrinths.
 
 //void Labyrinth::traverseToNext(Node* n, Node* root, std::list<Node*> *path){
 //	if(n != NULL){
@@ -329,8 +350,8 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
 
 
-                std::list<Node*> *to_connect = new std::list<Node*>(*(vertex->getAdj_Nodes()));
-                to_connect->push_back(vertex);
+                std::set<Node*> *to_connect = new std::set<Node*>(*(vertex->getAdj_Nodes()));
+                to_connect->insert(vertex);
 
                 //std::list<Node*> *to_connect = vertex->getAdj_Nodes();
 
@@ -341,10 +362,10 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 for(std::list< std::set<Node*>* >::iterator it=connected_components->begin(); it != connected_components->end(); it++){
                 	std::set<Node*> *s = *it;
 
-                	for(std::list<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
+                	for(std::set<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
                 		Node* n = *iter;
                 		if(s->find(n) != s->end() ){
-                			for(std::list<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
+                			for(std::set<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
 								Node* n = *iter;
 								s->insert(n);
 
@@ -363,7 +384,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
                 if(!found){
                 	std::set<Node*> *s = new std::set<Node*>();
-                	for(std::list<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
+                	for(std::set<Node*>::iterator iter=to_connect->begin(); iter != to_connect->end(); iter++ ){
 						Node* n = *iter;
 						s->insert(n);
 
@@ -424,15 +445,7 @@ int main(int args, char** argv) {
 
     lb.drawPath();
 
-    for(std::vector< std::vector<char>* >::iterator it=mat->begin(); it != mat->end(); it++){
-    	std::vector<char>* inner = *it;
-    	for(std::vector<char>::iterator iter=inner->begin(); iter != inner->end(); iter++){
-    		char c = *iter;
-    		std::cout << c << " ";
-    	}
-    	std::cout << endl;
 
-    }
 
 //    for(int i=0; i < rows; i++){
 //            for(int j=0; j < cols; j++) {

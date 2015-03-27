@@ -27,7 +27,7 @@ class Node{
         int id;
         int row_no;
         int col_no;
-        std::list<Node*> *adj_nodes;
+        std::set<Node*> *adj_nodes;
         bool visited;
     public:
 
@@ -56,7 +56,7 @@ class Node{
        /**
 		*A simple getter method returning the list of adjacent nodes
 		*/
-        std::list<Node*>* getAdj_Nodes();
+        std::set<Node*>* getAdj_Nodes();
        /**
 		*A simple getter method to find out if the node is visited while traversal of finding the longest path.
 		* This is useful only to the findPath function..which makes the traversal
