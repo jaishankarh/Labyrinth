@@ -17,6 +17,9 @@ Date: 23.03.2015
 #include "Labyrinth.h"
 
 
+//the else part in the mainstack.push needs revision...it does not work as expected..
+//need to keep popping out of the stack until we find another route...also when the loop reaches a loop where there exist other ajacent nodes but they are all visited..and the path currently formed is the longest, then also store this path..
+
 /*
 The Node class encpasulates the properties and methods of one particular single node..
 id: this field stores a sequential number allocated from left to right.
@@ -28,7 +31,7 @@ using namespace std;
 
 typedef std::list<Node*> stdnodelist;
 
-char** Labyrinth::getMatrix(){return matrix;}
+std::vector< std::vector<char>* >* Labyrinth::getMatrix(){return matrix;}
 int Labyrinth::getNoRows(){return no_rows;}
 int Labyrinth::getNoCols(){return no_cols;}
 std::set<Node*>* Labyrinth::getExtremities(){return extremities;}
@@ -40,7 +43,7 @@ Labyrinth::Labyrinth(std::iostream &input){
 }
 
 Labyrinth::~Labyrinth(){
-        	delete[] matrix;
+        	delete matrix;
 
         	delete nodes_map;
         	delete connected_components;
@@ -94,6 +97,7 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 		Node* n = mainStack->top();
 		mainStack->pop();
 		if(n->getVisited()){
+
 			continue;
 		}
 		n->setVisited(true);
@@ -112,6 +116,7 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 				longest_path = new std::list<Node*>(*path);
 				max = path->size();
 				delete to_be_deleted;
+				path->pop_back();
 			}
 			else{
 				Node* last = path->back();
@@ -123,9 +128,14 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 
 		}
 		else{
-
+			bool pushed_one = false;
 			for(std::list<Node*>::iterator it=adjnodes->begin(); it!=adjnodes->end(); it++ ){
-				mainStack->push(*it);
+				Node *n = *it;
+				if(!n->getVisited()){
+					pushed_one = true;
+					mainStack->push(*it);
+				}
+
 			}
 		}
 
@@ -188,7 +198,8 @@ void Labyrinth::drawPath(){
 		Node* t = *it;
 		int row = t->getId()/10;
 		int col = t->getId() % 10;
-		matrix[row][col] = ++count + '0';
+		matrix->at(row)->at(col)= '*';
+
 	}
 }
 
@@ -214,41 +225,41 @@ void Labyrinth::init_matrix(std::iostream &input) {
 
 
     }
-    no_rows = size/len;
-    //-1 for the newline char
-    no_cols = len-1;
-    matrix = new char* [no_cols]();
-    char* temp = new char [no_rows]();
+//    no_rows = size/len;
+//    //-1 for the newline char
+//    no_cols = len-1;
+    matrix = new std::vector< std::vector<char>* >();
+    std::vector<char>* temp = new std::vector<char>();
     //initialise the two dimensional array..
-    int i = 0,j = 0;
+    int i=0,j = 0;
     //all_nodes = new std::list<Node*>();
     nodes_map = new std::map<int, Node*>();
     for(int k=0; k < size; k++) {
-        if(i < no_rows) {
 
             if(buffer[k]=='\n' || k+1 == size){
             	if(k+1 == size){
-            		temp[j] = buffer[k];
+            		temp->push_back(buffer[k]);
 					Node* n = new Node(i,j);
 					nodes_map->insert(std::pair<int, Node*>(n->getId(), n));
-					matrix[i] = temp;
+					matrix->push_back(temp);
 					break;
             	}
-                matrix[i] = temp;
-                temp = new char [no_rows]();
+            	matrix->push_back(temp);
+            	temp = new std::vector<char>();
                 i++;
                 k++;
                 j = 0;
 
 
             }
-            temp[j] = buffer[k];
+            temp->push_back(buffer[k]);
+
             Node* n = new Node(i,j);
             //all_nodes->add(n);
             nodes_map->insert(std::pair<int, Node*>(n->getId(), n));
             j++;
 
-        }
+
     }
 
 
@@ -257,9 +268,12 @@ void Labyrinth::init_matrix(std::iostream &input) {
     connected_components = new std::list< std::set<Node*>* >();
     extremities = new std::set<Node*>();
 
+    no_rows = matrix->size();
+    no_cols = matrix->at(0)->size();
+
     for(i=0; i < no_rows; i++) {
         for(j=0; j < no_cols; j++) {
-            char c = matrix[i][j];
+            char c = matrix->at(i)->at(j);
             if(c == '#'){
 
 
@@ -273,7 +287,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 //check right
                 char right_char;
                 if(j+1 < no_cols) {
-                	right_char = matrix[i][j+1];
+                	right_char = matrix->at(i)->at(j+1);
                 	if(right_char == '.'){
                 		int t_id = i*10 + j+1;
                 		Node* n = nodes_map->find(t_id)->second;
@@ -282,7 +296,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
                 char left_char;
                 if(j-1 >= 0) {
-                	left_char = matrix[i][j-1];
+                	left_char = matrix->at(i)->at(j-1);
                 	if(left_char == '.'){
                 		int t_id = i*10 + j-1;
                 		Node* n = nodes_map->find(t_id)->second;
@@ -291,7 +305,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
                 char down_char;
                 if(i+1 < no_rows) {
-                	down_char = matrix[i+1][j];
+                	down_char = matrix->at(i+1)->at(j);
                 	if(down_char == '.'){
                 		int t_id = (i+1)*10 + j;
                 		Node* n = nodes_map->find(t_id)->second;
@@ -300,7 +314,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
                 char up_char;
                 if(i-1 >= 0) {
-                	up_char = matrix[i-1][j];
+                	up_char = matrix->at(i-1)->at(j);
                 	if(up_char == '.'){
                 		int t_id = (i-1)*10 + j;
                 		Node* n = nodes_map->find(t_id)->second;
@@ -315,10 +329,10 @@ void Labyrinth::init_matrix(std::iostream &input) {
                 }
 
 
-                //std::list<Node*> *to_connect = new std::list<Node*>(*(vertex->getAdj_Nodes()));
-                //to_connect->push_back(vertex);
+                std::list<Node*> *to_connect = new std::list<Node*>(*(vertex->getAdj_Nodes()));
+                to_connect->push_back(vertex);
 
-                std::list<Node*> *to_connect = vertex->getAdj_Nodes();
+                //std::list<Node*> *to_connect = vertex->getAdj_Nodes();
 
                 bool found = false;
 
@@ -335,7 +349,7 @@ void Labyrinth::init_matrix(std::iostream &input) {
 								s->insert(n);
 
 							}
-                			s->insert(vertex);
+                			//s->insert(vertex);
                 			found = true;
                 			break;
                 		}
@@ -386,12 +400,12 @@ int main(int args, char** argv) {
 //    std::stringstream instream (str);
 	std::fstream instream(argv[1]);
     Labyrinth lb(instream);
-    char** mat = lb.getMatrix();
+    std::vector< std::vector<char>* >* mat = lb.getMatrix();
     int rows = lb.getNoRows();
     int cols = lb.getNoCols();
     for(int i=0; i < rows; i++){
         for(int j=0; j < cols; j++) {
-            std::cout << mat[i][j] << " ";
+            std::cout << mat->at(i)->at(j) << " ";
         }
         std::cout << endl;
     }
@@ -410,12 +424,22 @@ int main(int args, char** argv) {
 
     lb.drawPath();
 
-    for(int i=0; i < rows; i++){
-            for(int j=0; j < cols; j++) {
-                std::cout << mat[i][j] << " ";
-            }
-            std::cout << endl;
-        }
+    for(std::vector< std::vector<char>* >::iterator it=mat->begin(); it != mat->end(); it++){
+    	std::vector<char>* inner = *it;
+    	for(std::vector<char>::iterator iter=inner->begin(); iter != inner->end(); iter++){
+    		char c = *iter;
+    		std::cout << c << " ";
+    	}
+    	std::cout << endl;
+
+    }
+
+//    for(int i=0; i < rows; i++){
+//            for(int j=0; j < cols; j++) {
+//                std::cout << mat->at(i)->at(j) << " ";
+//            }
+//            std::cout << endl;
+//        }
 
 }
 

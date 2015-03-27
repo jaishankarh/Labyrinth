@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <set>
+#include <vector>
 #include <map>
 #include <iostream>
 #include <fstream>
@@ -21,7 +22,7 @@ class Labyrinth {
     public:
         Labyrinth(std::iostream &input);
         ~Labyrinth();
-        char** getMatrix();
+        std::vector< std::vector<char>* >* getMatrix();
         int getNoRows();
         int getNoCols();
         std::set<Node*>* getExtremities();
@@ -34,7 +35,7 @@ class Labyrinth {
     private:
         //reads a file from the disk which contains the schema of the matrix... the #s and the dots..and load the other properties.
         void init_matrix(std::iostream &input);
-        char** matrix;
+        std::vector< std::vector<char>* > *matrix;
         int no_rows;
         int no_cols;
         unsigned long max;
