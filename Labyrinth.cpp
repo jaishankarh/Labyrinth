@@ -57,8 +57,16 @@ Labyrinth::~Labyrinth(){
         	std::cout << "I was here in the destructor" << endl;
         };
 
+/**
+ * this method traverses through all the extremities there are..
+ * after all the longest path has to have two extremities...
+ * then first finds a temp longest path (because initially max is 0, so first path is longest)
+ *  then eliminates all the other connected_components whose size is smaller
+ *  than that of the size of the longest path..
+ *  because if a connected_component needs to have a path that is longer than the current one,
+ *  then at least its size must be greater than that of the longest_path, basically it should have as many nodes.
 
-
+ */
 void Labyrinth::findLongest(){
 	//this variable is to check if the connected_components to which the extremity belongs has at least max elements..if not there is not point in traversing those nodes
 	bool no_need = false;
@@ -214,14 +222,34 @@ void Labyrinth::findPath(Node* root,std::list<Node*> *path){
 //}
 
 void Labyrinth::drawPath(){
-	int count = 0;
+	std::map<int, int> lpath;
+	int pos_in_path = 1;
 	for(std::list<Node*>::iterator it=longest_path->begin(); it!=longest_path->end(); it++){
-		Node* t = *it;
-		int row = t->getId()/10;
-		int col = t->getId() % 10;
-		matrix->at(row)->at(col)= '*';
+			Node* t = *it;
+			int id = t->getId();
+			lpath.insert(std::pair<int, int>(id, pos_in_path));
+			pos_in_path++;
 
 	}
+
+	int count = 0;
+	for(int i=0; i < no_rows; i++){
+		for(int j=0; j < no_cols; j++) {
+
+			int id = i*10 + j;
+			std::map<int, int>::iterator iter = lpath.find(id);
+			if(iter != lpath.end()){
+				std::cout<< iter->second << " ";
+
+			}
+			else{
+				std::cout << matrix->at(i)->at(j) << " ";
+			}
+
+		}
+		std::cout << endl;
+	}
+
 }
 
 
@@ -417,8 +445,8 @@ int main(int args, char** argv) {
     // simultaneously in this loop store all the extremities in a queue list
     // finally start dequeuing the extremeties queue and follow and calculate path length..
     // finally will have the longest path..
-//    std::string str("##.##.#\n#..##.#\n#.#####\n#..####\n#######\n");
-//    std::stringstream instream (str);
+//    std::std::string str("##.##.#\n#..##.#\n#.#####\n#..####\n#######\n");
+//    std::std::stringstream instream (str);
 	std::fstream instream(argv[1]);
     Labyrinth lb(instream);
     std::vector< std::vector<char>* >* mat = lb.getMatrix();
